@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+  <channel>
+    <title>深度笔记</title>
+    <link>https://dongpobreeze.github.io/</link>
+    <description>关于智能系统、推理过程与工程实践的持续研究。</description>
+    <language>zh-cn</language>
+    <item>
+      <title>推理时计算：让模型在作答前多想一步</title>
+      <link>https://dongpobreeze.github.io/posts/thinking-compute/</link>
+      <guid isPermaLink="true">https://dongpobreeze.github.io/posts/thinking-compute/</guid>
+      <pubDate>Sun, 18 Oct 2026 00:00:00 +0000</pubDate>
+      <description>推理时计算把算力从训练阶段移到回答阶段。关键问题不只是生成更多 token，而是把额外预算放在能够改变答案质量的地方。</description>
+      <category>大语言模型</category>
+      <category>推理方法</category>
+    </item>
+    <item>
+      <title>奖励设计：如何识别被指标掩盖的失败</title>
+      <link>https://dongpobreeze.github.io/posts/reward-design/</link>
+      <guid isPermaLink="true">https://dongpobreeze.github.io/posts/reward-design/</guid>
+      <pubDate>Sun, 27 Sep 2026 00:00:00 +0000</pubDate>
+      <description>当系统直接优化一个可度量的目标，它可能学会利用指标的盲点。奖励设计需要同时回答目标是什么，以及哪些捷径不该被允许。</description>
+      <category>强化学习</category>
+      <category>评估</category>
+    </item>
+    <item>
+      <title>智能体的记忆，不只是把对话保存下来</title>
+      <link>https://dongpobreeze.github.io/posts/agent-memory/</link>
+      <guid isPermaLink="true">https://dongpobreeze.github.io/posts/agent-memory/</guid>
+      <pubDate>Sun, 9 Aug 2026 00:00:00 +0000</pubDate>
+      <description>长期任务需要从多次交互中提取稳定且有用的知识。记忆系统的核心是如何写入、检索、更新和忘记。</description>
+      <category>智能体</category>
+      <category>工程实践</category>
+    </item>
+    <item>
+      <title>检索增强生成：答案前先检查证据</title>
+      <link>https://dongpobreeze.github.io/posts/retrieval-checks/</link>
+      <guid isPermaLink="true">https://dongpobreeze.github.io/posts/retrieval-checks/</guid>
+      <pubDate>Thu, 16 Jul 2026 00:00:00 +0000</pubDate>
+      <description>检索系统并不会因为引入了外部文档就自动变得可靠。召回、证据定位与回答校验需要被作为同一条链路来评估。</description>
+      <category>检索系统</category>
+      <category>大语言模型</category>
+    </item>
+    <item>
+      <title>可复现的评估流程，比一张排行榜更有用</title>
+      <link>https://dongpobreeze.github.io/posts/evaluation-harness/</link>
+      <guid isPermaLink="true">https://dongpobreeze.github.io/posts/evaluation-harness/</guid>
+      <pubDate>Sat, 30 May 2026 00:00:00 +0000</pubDate>
+      <description>一次可信的模型比较需要固定数据、执行环境和评分方法。系统边界写得越清楚，评估结果越能支持真实决策。</description>
+      <category>评估</category>
+      <category>工程实践</category>
+    </item>
+    <item>
+      <title>多模态数据准备：质量从哪里开始</title>
+      <link>https://dongpobreeze.github.io/posts/multimodal-data/</link>
+      <guid isPermaLink="true">https://dongpobreeze.github.io/posts/multimodal-data/</guid>
+      <pubDate>Tue, 21 Apr 2026 00:00:00 +0000</pubDate>
+      <description>图像和文本的配对质量、许可范围与重复样本都会影响模型学到什么。在训练前记录数据来源，能减少后续排查的成本。</description>
+      <category>多模态</category>
+      <category>数据</category>
+    </item>
+    <item>
+      <title>工具调用的可靠性：把边界画在模型之外</title>
+      <link>https://dongpobreeze.github.io/posts/tool-use-reliability/</link>
+      <guid isPermaLink="true">https://dongpobreeze.github.io/posts/tool-use-reliability/</guid>
+      <pubDate>Thu, 12 Mar 2026 00:00:00 +0000</pubDate>
+      <description>模型负责选择动作，工具层负责校验参数、控制权限与记录结果。清楚的边界能降低幻觉指令带来的副作用。</description>
+      <category>智能体</category>
+      <category>工程实践</category>
+    </item>
+    <item>
+      <title>理解扩散生成：一条从噪声反向走回去的路径</title>
+      <link>https://dongpobreeze.github.io/posts/diffusion-denoising/</link>
+      <guid isPermaLink="true">https://dongpobreeze.github.io/posts/diffusion-denoising/</guid>
+      <pubDate>Sun, 8 Feb 2026 00:00:00 +0000</pubDate>
+      <description>扩散模型在训练时学习逐步去噪，在生成时反向执行这一过程。噪声调度和条件信息共同决定采样的质量与速度。</description>
+      <category>生成模型</category>
+      <category>机器学习基础</category>
+    </item>
+  </channel>
+</rss>
