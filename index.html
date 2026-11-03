@@ -4,26 +4,25 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f8f8f5" />
-    <meta name="description" content="关于智能系统、推理过程与工程实践的持续研究。" />
+    <meta name="description" content="{{SITE_DESCRIPTION}}" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="深度笔记 | 把复杂问题写清楚" />
-    <meta property="og:description" content="关于智能系统、推理过程与工程实践的持续研究。" />
-    <meta property="og:image" content="/assets/compute-notes.jpg" />
-    <link rel="canonical" href="https://dongpobreeze.github.io/" />
-    <link rel="alternate" type="application/rss+xml" title="深度笔记" href="/feed.xml" />
+    <meta property="og:title" content="{{SITE_TITLE}}" />
+    <meta property="og:description" content="{{SITE_DESCRIPTION}}" />
+    <link rel="canonical" href="{{SITE_URL}}" />
+    <link rel="alternate" type="application/rss+xml" title="{{SITE_NAME}}" href="/feed.xml" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/styles.css" />
-    <script defer src="/posts.js"></script>
+    <script defer src="/blog.js"></script>
     <script defer src="/app.js"></script>
-    <title>深度笔记 | 把复杂问题写清楚</title>
+    <title>{{SITE_TITLE}}</title>
   </head>
   <body>
     <a class="skip-link" href="#main">跳转到正文</a>
     <header class="site-header">
       <div class="nav-wrap">
-        <a class="brand" href="/" aria-label="深度笔记，首页">
+        <a class="brand" href="/" aria-label="{{SITE_NAME}}，首页">
           <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
-          <span class="brand-name">深度笔记<span class="brand-dot">.</span></span>
+          <span class="brand-name">{{SITE_NAME}}<span class="brand-dot">.</span></span>
         </a>
         <nav class="primary-nav" aria-label="主导航">
           <a data-nav="home" href="/">文章</a>
@@ -47,8 +46,9 @@
     </main>
     <footer class="site-footer">
       <div class="footer-inner">
-        <span>© <span id="year">2026</span> 深度笔记</span>
+        <span>© <span id="year">2026</span> {{SITE_NAME}}</span>
         <a class="feed-link" href="/feed.xml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 19v.01M5 5a14 14 0 0 1 14 14M5 11a8 8 0 0 1 8 8"></path></svg>RSS 订阅</a>
+        <a href="https://github.com/DongpoBreeze/dongpobreeze.github.io#readme" target="_blank" rel="noopener noreferrer">管理博客</a>
         <a href="#main" class="back-top" aria-label="返回顶部">返回顶部 <span aria-hidden="true">↑</span></a>
       </div>
     </footer>
