@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src https://api.github.com; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>作者验证 · 个人博客</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/author/styles.css">
+  <script type="module" src="/author/author.js"></script>
+</head>
+<body>
+  <a class="skip" href="#github-token">跳到作者验证</a>
+  <header class="topbar"><a href="/" class="back-link">← 返回公开博客</a><a href="/" class="public-note">公开阅读，无需登录 <span>↗</span></a></header>
+  <main class="author-page" id="author-gate">
+    <section class="intro"><span class="eyebrow">AUTHOR’S DESK</span><h1>留给创作的<br>一方书桌<span>.</span></h1><p>博客里的文章向每一位读者开放。<br>这里是独立的作者入口，<br>验证身份后，可写作、整理和发布。</p><div class="ink-mark" aria-hidden="true"><span></span><span></span><span></span></div><p id="gate-status" class="gate-status" role="status">博客对所有人开放；这里仅供作者验证并进入写作室。</p><a class="intro-back" href="/">只是来阅读？回到公开博客 →</a></section>
+    <section class="login-card" aria-labelledby="login-heading"><span class="eyebrow">仅对作者 DongpoBreeze 开放</span><h2 id="login-heading">验证作者身份</h2><p class="lead">使用 GitHub 专用令牌，进入你的个人写作室。</p>
+      <ol class="steps"><li><strong>创建专用令牌</strong><p>登录 <b>DongpoBreeze</b> 账户，打开 <a id="token-link" target="_blank" rel="noopener noreferrer">GitHub fine-grained 令牌页面 ↗</a>。Resource owner 选择 <b>DongpoBreeze</b>。</p></li><li><strong>只授权博客仓库</strong><p>Repository access 选 <b>Only select repositories</b>，手动只选 <b>dongpobreeze.github.io</b>。Permissions → Repository permissions → <b>Contents: Read and write</b>。无需其他权限，链接不能自动选择仓库。</p></li><li><strong>生成后粘贴到下面</strong><p>点击 Generate token 后复制令牌。令牌只发送到 <b>api.github.com</b>，不会出现在链接中。</p></li></ol>
+      <form id="connect-form"><label for="github-token">GitHub 令牌</label><input id="github-token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…" required aria-describedby="token-help"><p id="token-help" class="field-help">仅在当前浏览器会话保存。关闭会话后需重新验证；令牌不会写入草稿、仓库或导出文件，请勿在共用设备上保持登录。</p><p id="connection-error" class="error-text" role="alert" hidden></p><button id="storage-retry" class="secondary" type="button" hidden>重新检查浏览器存储</button><button id="confirm-connect" type="submit" class="primary">验证并进入写作室</button></form>
+      <p class="privacy-note">验证只开放作者的创作管理权限，公众阅读始终无需登录。</p>
+    </section>
+  </main>
+  <noscript><p class="no-script">作者验证需要启用 JavaScript。<a href="/">返回公开博客</a>可直接阅读。</p></noscript>
+</body>
+</html>

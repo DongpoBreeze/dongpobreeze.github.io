@@ -1,6 +1,8 @@
 # 个人博客
 
-博客地址：[dongpobreeze.github.io](https://dongpobreeze.github.io/)。点击网站右上角 **写文章**，或直接打开 [作者入口](https://dongpobreeze.github.io/admin/)。通过作者验证后，就能可视化写作和管理博客。
+公开博客：[dongpobreeze.github.io](https://dongpobreeze.github.io/)。所有人都能直接阅读首页、文章、归档、主题和关于页，无需登录。
+
+作者验证是独立的页面：[作者入口](https://dongpobreeze.github.io/author/)。也可以从博客页脚点击 **作者入口**。验证通过后会进入 [写作室](https://dongpobreeze.github.io/admin/)，可视化写作和管理博客。
 
 ## 在可视化编辑器里管理博客
 
@@ -12,11 +14,11 @@
 
 编辑器可在电脑和手机浏览器使用。草稿保留在写作的这台设备；已经发布的文章保存在 GitHub，可换设备继续编辑。
 
-编辑区、草稿列表和站点设置只在作者验证通过后显示。当前仅允许 `DongpoBreeze` 账号进入；GitHub 仍会对每次发布检查仓库写入权限。普通访客可阅读博客。
+编辑区、草稿列表和站点设置只在作者验证通过后显示。当前仅允许 `DongpoBreeze` 账号进入；GitHub 仍会对每次发布检查仓库写入权限。未登录直接打开写作室，会前往独立的作者验证页；退出后也回到此页。
 
 ## 首次连接 GitHub
 
-GitHub Pages 提供静态托管，发布时需要你授权编辑器写入博客仓库。编辑器的“连接 GitHub”提供设置指引：
+GitHub Pages 提供静态托管，发布时需要你授权编辑器写入博客仓库。独立的作者验证页提供设置指引：
 
 1. 登录 `DongpoBreeze`，按页面链接创建 **fine-grained personal access token**。
 2. 在 **Only select repositories** 中只选择 `dongpobreeze.github.io`，权限使用 **Contents → Read and write**。

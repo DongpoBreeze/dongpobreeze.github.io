@@ -224,7 +224,7 @@ export async function buildSite({ rootDir = projectDirectory, outputDir = join(r
   await writeFile(join(outputDir, "blog.js"), "window.BLOG=JSON.parse(" + JSON.stringify(dataJson).replace(/</g, "\\u003c") + ");\n", "utf8");
   await writeFile(join(outputDir, "feed.xml"), makeFeed(site), "utf8");
   await writeFile(join(outputDir, "sitemap.xml"), ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">', ...pages.map((page) => "  <url><loc>" + escapeXml(site.baseUrl + page.path) + "</loc></url>"), "</urlset>", ""].join("\n"), "utf8");
-  await writeFile(join(outputDir, "robots.txt"), "User-agent: *\nAllow: /\nDisallow: /admin/\nSitemap: " + site.baseUrl + "/sitemap.xml\n", "utf8");
+  await writeFile(join(outputDir, "robots.txt"), "User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /author/\nSitemap: " + site.baseUrl + "/sitemap.xml\n", "utf8");
   await writeFile(join(outputDir, ".nojekyll"), "", "utf8");
   let hasAdmin = false;
   try { hasAdmin = (await stat(join(rootDir, "admin", "index.html"))).isFile(); }

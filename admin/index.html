@@ -13,15 +13,12 @@
   <script type="module" src="./editor.js"></script>
 </head>
 <body>
-  <a class="skip" href="#author-login-button">跳到作者验证</a>
+  <a class="skip" href="#auth-status">跳到验证状态</a>
   <header class="topbar">
     <div class="identity"><a href="/" class="back-link">← 返回博客</a><span class="divider"></span><strong>写作室<span class="brand-dot">.</span></strong><span class="local-note">从一点想法开始</span></div>
-    <button id="connect-button" class="connection"><span class="connection-dot"></span><span id="connection-label">作者验证</span></button>
+    <div id="author-session" class="author-session" hidden><span id="connection-label"></span><button id="disconnect-button">退出写作室</button></div>
   </header>
-  <main id="author-gate" class="author-gate">
-    <section class="gate-copy"><span class="eyebrow">一个安静的写作空间</span><h1>你的文字，<br>从这里出发<span>.</span></h1><p>写文章、整理想法，打理属于自己的博客。<br>请先验证作者身份，进入个人写作室。</p><button id="author-login-button" class="primary">验证 GitHub 作者身份 <span>→</span></button><p id="gate-status" class="gate-status" role="status">仅对作者 DongpoBreeze 开放</p><a href="/" class="gate-back">← 回博客读文章</a></section>
-    <aside class="gate-paper" aria-label="作者验证说明"><span class="gate-paper-label">AUTHOR’S DESK</span><div class="gate-lines"><span></span><span></span><span></span></div><h2>留给自己的<br>一方书桌。</h2><div class="gate-rule"></div><p><strong>01</strong><span>用专用 GitHub 令牌验证作者身份</span></p><p><strong>02</strong><span>正文与图片草稿保存在本机浏览器</span></p><p><strong>03</strong><span>发布时再次校验仓库写入权限</span></p><small>无需另外注册，令牌仅在当前会话保存。</small></aside>
-  </main>
+  <main id="auth-wait" class="auth-wait"><span class="eyebrow">写作室</span><h1>正在验证作者身份</h1><p id="auth-status" role="status">正在向 GitHub 核对当前会话，请稍候。</p><a href="/">← 返回公开博客</a><a class="retry-author" href="/author/">重新进行作者验证</a><noscript><p>写作室需要启用 JavaScript。公开博客可以直接阅读。</p></noscript></main>
   <div class="workspace" id="workspace-shell" hidden inert>
     <aside class="sidebar" aria-label="文章与站点管理">
       <button id="new-post" class="primary new-post">＋ 写一篇新文章</button>
@@ -64,7 +61,6 @@
       <noscript>写作室需要浏览器启用 JavaScript。</noscript>
     </main>
   </div>
-  <dialog id="connection-dialog" class="connect-dialog"><div class="dialog-heading"><div><span class="eyebrow">首次验证，一次设置</span><h2>验证 GitHub 作者身份</h2></div><button data-close="connection-dialog" class="close-button" aria-label="关闭连接窗口">×</button></div><p class="muted">仅允许 <strong>DongpoBreeze</strong> 账户进入写作室。GitHub 验证通过后，才能编辑草稿、站点资料和发布文章。</p><ol class="steps"><li><strong>创建专用令牌</strong><p>登录 <b>DongpoBreeze</b> 账户，打开 <a id="token-link" target="_blank" rel="noopener noreferrer">GitHub fine-grained 令牌页面 ↗</a>。Resource owner 选择 <b>DongpoBreeze</b>。</p></li><li><strong>只授权这个博客仓库</strong><p>Repository access 选 <b>Only select repositories</b>，手动只选 <b>dongpobreeze.github.io</b>（链接不能自动选仓库）。Permissions → Repository permissions → <b>Contents: Read and write</b>。无需其他权限。</p></li><li><strong>生成后粘贴到这里</strong><p>到页面底部点击 Generate token，复制生成的令牌。令牌只发送到 api.github.com。</p></li></ol><form id="connect-form"><label for="github-token">GitHub 令牌</label><input id="github-token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…" required><p class="small muted">仅在当前浏览器会话保存，关闭浏览器会话后需重新验证。不会写入草稿、仓库或导出文件。请勿在共用设备上保持连接。</p><p id="connection-error" class="error-text" role="alert" hidden></p><div class="dialog-buttons"><button id="disconnect-button" type="button" class="danger-text" hidden>断开并清除令牌</button><button type="button" data-close="connection-dialog">取消</button><button id="confirm-connect" type="submit" class="primary">验证并进入</button></div></form></dialog>
   <dialog id="preview-dialog" class="preview-dialog"><div class="dialog-heading"><div><span class="eyebrow">本机预览 · 尚未发布</span><h2 id="preview-title"></h2></div><button data-close="preview-dialog" class="close-button" aria-label="关闭预览">×</button></div><p id="preview-meta" class="small muted"></p><div id="preview-content" class="preview-content"></div></dialog>
   <dialog id="confirm-dialog" class="confirm-dialog"><h2 id="confirm-title"></h2><p id="confirm-message"></p><div class="dialog-buttons"><button id="confirm-cancel">取消</button><button id="confirm-action" class="primary">继续</button></div></dialog>
 </body>

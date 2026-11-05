@@ -3,19 +3,21 @@ import '@toast-ui/editor/dist/i18n/zh-cn';
 import '@toast-ui/editor/dist/toastui-editor.css';
 import DOMPurify from 'dompurify';
 import MarkdownIt from 'markdown-it';
-import { canonicalBody, displayBody, defaultSlug, draftRecord, parsePost, prepareImage, recordFromPost, serializePost, serializeSettings, validatePost } from './content.mjs';
-import { ACTIONS_URL, BRANCH, GitHubClient, REPOSITORY, TOKEN_URL } from './github.mjs';
-import { clearSession, DraftStore, readSession, saveSession } from './drafts.mjs';
+import { canonicalBody, displayBody, draftRecord, parsePost, prepareImage, recordFromPost, serializePost, serializeSettings, validatePost } from './content.mjs';
+import { ACTIONS_URL } from './github.mjs';
+import { DraftStore } from './drafts.mjs';
+import { clearSession, readSession } from './session.mjs';
+import { authorPath, restoreAuthor } from './auth.mjs';
 
 const $ = (id) => document.getElementById(id);
 const store = new DraftStore();
 const markdown = new MarkdownIt({ html: false, linkify: false });
-const state = { current: null, client: null, login: '', posts: [], drafts: [], snapshot: null, initial: null, busy: false, suppress: false, revision: 0, savedRevision: 0, timer: null, saveQueue: Promise.resolve(), sourceOpen: false, sourceChanged: false, editorShadow: '', remoteLoaded: false, unpersisted: false, locked: true, navigation: 0 };
+const state = { current: null, client: null, login: '', posts: [], drafts: [], snapshot: null, initial: null, busy: false, suppress: false, revision: 0, savedRevision: 0, timer: null, saveQueue: Promise.resolve(), sourceOpen: false, sourceChanged: false, editorShadow: '', remoteLoaded: false, unpersisted: false, locked: true, navigation: 0, authGeneration: 0, exiting: false };
 let editor;
 
 function textNode(tag, content, className) { const node = document.createElement(tag); node.textContent = content; if (className) node.className = className; return node; }
 function showNotice(message, error = false, actions = false) {
-  if (state.locked) { $('gate-status').textContent = message; return; }
+  if (state.locked) { $('auth-status').textContent = message; return; }
   const notice = $('notice');
   notice.replaceChildren(textNode('span', message)); notice.classList.toggle('error', error); notice.hidden = false;
   if (actions) { const link = textNode('a', '查看 GitHub Actions ↗'); link.href = ACTIONS_URL; link.target = '_blank'; link.rel = 'noopener noreferrer'; notice.append(link); }
@@ -28,11 +30,11 @@ function isMeaningful(record) { return record.kind !== 'post' || Boolean(record.
 function setBusy(busy) {
   state.busy = busy;
   $('editing-view').inert = busy; $('settings-view').inert = busy; document.querySelector('.sidebar').inert = busy;
-  for (const id of ['publish-button', 'withdraw-button', 'delete-remote', 'connect-button', 'new-post', 'edit-about', 'edit-settings', 'refresh-posts', 'import-button']) $(id).disabled = busy;
+  for (const id of ['publish-button', 'withdraw-button', 'delete-remote', 'disconnect-button', 'new-post', 'edit-about', 'edit-settings', 'refresh-posts', 'import-button']) $(id).disabled = busy;
   $('publish-button').textContent = busy ? '正在提交…' : state.current?.kind === 'settings' ? '发布站点资料' : state.current?.kind === 'about' ? '发布关于我' : state.current?.path && !state.current.remoteDraft ? '更新文章' : '发布文章';
 }
 function changed() {
-  if (state.suppress || !state.current) return;
+  if (state.suppress || state.locked || state.exiting || !state.current) return;
   state.revision += 1; state.unpersisted = true;
   saveStatus('尚未保存…');
   clearTimeout(state.timer);
@@ -41,7 +43,7 @@ function changed() {
 function ensureSlug(record) { if (record.kind === 'post' && !record.slug) record.slug = 'post-' + record.date.replace(/-/g, '') + '-' + record.id.slice(0, 8); }
 async function saveCurrent({ quiet = false } = {}) {
   clearTimeout(state.timer);
-  if (!state.current || !isMeaningful(state.current)) return true;
+  if (state.locked || state.exiting || !state.current || !isMeaningful(state.current)) return true;
   const record = draftRecord(state.current);
   const revision = state.revision;
   state.saveQueue = state.saveQueue.catch(() => {}).then(() => store.save(record));
@@ -99,7 +101,11 @@ function renderCurrent() {
   setBusy(state.busy);
 }
 async function refreshDrafts() {
-  state.drafts = (await store.all()).sort((a, b) => b.updatedAt - a.updatedAt);
+  const generation = state.authGeneration;
+  if (state.locked || state.exiting) return;
+  const drafts = await store.all();
+  if (state.locked || state.exiting || generation !== state.authGeneration) return;
+  state.drafts = drafts.sort((a, b) => b.updatedAt - a.updatedAt);
   renderDraftList();
 }
 function renderDraftList() {
@@ -280,7 +286,7 @@ async function publish({ withdraw = false } = {}) {
   if (record.kind === 'post') validatePost(record, state.posts.filter((post) => !post.remoteDraft));
   if (record.kind === 'about' && !record.body.trim()) throw new Error('关于我正文为空，请先写些内容。');
   if (record.kind === 'settings') serializeSettings(record);
-  if (!state.client) { await saveCurrent(); $('connection-dialog').showModal(); $('github-token').focus(); showNotice('正文已保存在本机，连接后再点击发布。'); return; }
+  if (!state.client) throw new Error('作者会话不可用，请先保存草稿，再退出并重新验证。');
   if (withdraw && !(await confirmAction('撤下这篇文章？', '将把仓库文章标记为 draft:true。部署成功后，文章将不再公开；源文件和本机草稿会保留，之后可重新发布。', '撤下文章', true))) return;
   setBusy(true);
   try {
@@ -311,7 +317,7 @@ async function publish({ withdraw = false } = {}) {
 }
 async function deleteRemote() {
   if (state.busy || !state.current.path || state.current.kind !== 'post') return;
-  if (!state.client) { $('connection-dialog').showModal(); return; }
+  if (!state.client) throw new Error('作者会话不可用，请先保存草稿，再退出并重新验证。');
   if (!(await confirmAction('永久删除仓库文章？', '将从 GitHub main 分支删除“' + state.current.title + '”的 Markdown 文件，部署后公开链接会失效。此操作保留本机草稿和已上传图片。确定要删除吗？', '删除仓库文章', true))) return;
   setBusy(true);
   try {
@@ -326,57 +332,43 @@ async function deleteRemote() {
   } finally { setBusy(false); }
 }
 
-async function connect(token, { restore = false } = {}) {
-  if (state.busy) return;
-  const client = new GitHubClient(token);
-  $('confirm-connect').disabled = true; $('confirm-connect').textContent = '正在验证…'; $('author-login-button').disabled = true; $('connection-error').hidden = true;
-  if (state.locked) $('gate-status').textContent = '正在向 GitHub 验证作者身份…';
-  try {
-    const { login } = await client.connect();
-    state.client?.clear(); state.client = client; state.login = login;
-    const stored = saveSession(token); $('github-token').value = '';
-    $('connection-label').textContent = login + ' · 已连接'; $('connect-button').classList.add('connected'); $('disconnect-button').hidden = false;
-    $('connection-dialog').close();
-    if (state.locked) await unlockWorkspace();
-    if (!stored) showNotice('已连接。浏览器不允许保存会话令牌，刷新页面后需重新连接。');
-    try { await loadRemote(); } catch (error) { showNotice(errorMessage(error), true); }
-  } catch (error) {
-    client.clear(); if (restore) clearSession();
-    if (state.client === client) { state.client = null; state.login = ''; clearSession(); lockWorkspace(); $('connection-label').textContent = '作者验证'; $('connect-button').classList.remove('connected'); $('disconnect-button').hidden = true; }
-    $('connection-error').textContent = errorMessage(error); $('connection-error').hidden = false;
-    if (state.locked) $('gate-status').textContent = restore ? '上次验证已失效或网络不可用，请重新验证作者身份。' : '验证未通过，只有作者 DongpoBreeze 可以进入写作室。';
-  } finally { $('confirm-connect').disabled = false; $('confirm-connect').textContent = '验证并进入'; $('author-login-button').disabled = false; }
-}
 async function disconnect() {
-  if (state.busy) return;
+  if (state.busy || state.locked || state.exiting) return;
+  setBusy(true);
   try { await saveCurrent(); }
   catch (error) {
-    if (!(await confirmAction('本机草稿尚未保存', errorMessage(error) + '\n继续断开会清除此页面中的未保存内容。建议先取消，导出 Markdown 并另存原图片。', '仍然断开', true))) return;
+    if (!(await confirmAction('本机草稿尚未保存', errorMessage(error) + '\n继续退出会清除此页面中的未保存内容。建议先取消，导出 Markdown 并另存原图片。', '仍然退出', true))) { setBusy(false); return; }
   }
-  state.client?.clear(); state.client = null; state.login = ''; clearSession(); $('github-token').value = '';
+  state.exiting = true;
+  state.client?.clear(); state.client = null; state.login = ''; clearSession();
   lockWorkspace();
-  $('connection-label').textContent = '作者验证'; $('connect-button').classList.remove('connected'); $('disconnect-button').hidden = true; $('connection-dialog').close();
-  $('gate-status').textContent = '已断开并清除会话令牌。本机草稿在下次作者验证后可恢复。';
+  window.location.replace(authorPath('signed-out'));
 }
 function lockWorkspace() {
-  state.locked = true; state.navigation += 1; clearTimeout(state.timer); releaseImages(state.current);
+  state.locked = true; state.navigation += 1; state.authGeneration += 1; clearTimeout(state.timer); releaseImages(state.current);
   editor?.destroy(); editor = null; $('editor').replaceChildren(); store.close();
-  state.current = null; state.drafts = []; state.posts = []; state.snapshot = null; state.initial = null; state.editorShadow = ''; state.sourceOpen = false; state.sourceChanged = false; state.unpersisted = false; state.remoteLoaded = false;
-  $('workspace-shell').hidden = true; $('workspace-shell').inert = true; $('author-gate').hidden = false;
+  state.current = null; state.drafts = []; state.posts = []; state.snapshot = null; state.initial = null; state.editorShadow = ''; state.sourceOpen = false; state.sourceChanged = false; state.unpersisted = false; state.remoteLoaded = false; state.busy = false;
+  $('workspace-shell').hidden = true; $('workspace-shell').inert = true; $('auth-wait').hidden = false; $('author-session').hidden = true; $('connection-label').textContent = '';
+  $('auth-status').textContent = '正在离开写作室…';
   for (const input of document.querySelectorAll('#workspace-shell input, #workspace-shell textarea')) input.value = '';
   $('draft-list').replaceChildren(); $('post-list').replaceChildren(); $('preview-content').replaceChildren(); $('preview-title').textContent = ''; $('preview-meta').textContent = '';
   $('post-count').textContent = '—'; $('draft-count').textContent = '0'; $('post-filter').hidden = true; $('notice').replaceChildren(); $('notice').hidden = true;
   for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
-  document.querySelector('.skip').href = '#author-login-button'; document.querySelector('.skip').textContent = '跳到作者验证'; $('author-login-button').focus();
+  document.querySelector('.skip').href = '#auth-status'; document.querySelector('.skip').textContent = '跳到验证状态';
 }
 async function unlockWorkspace() {
-  state.locked = false; $('author-gate').hidden = true; $('workspace-shell').hidden = false; $('workspace-shell').inert = false;
+  if (state.exiting || !state.client) return;
+  const generation = state.authGeneration;
+  state.locked = false; $('auth-wait').hidden = true; $('workspace-shell').hidden = false; $('workspace-shell').inert = false; $('author-session').hidden = false;
   createEditor(); await loadRecord(newPost(), { skipSave: true });
   document.querySelector('.skip').href = '#document-title'; document.querySelector('.skip').textContent = '跳到编辑区';
   if (matchMedia('(max-width: 720px)').matches) document.querySelector('.library').open = false;
   try { await store.open(); await refreshDrafts(); if (state.drafts.length) showNotice('本机保存了 ' + state.drafts.length + ' 份草稿。点击左侧草稿即可继续写作。'); }
   catch (error) { showNotice(errorMessage(error), true); }
-  try { const response = await fetch('./initial.json', { credentials: 'omit', cache: 'no-store' }); if (response.ok && !state.locked) state.initial = await response.json(); } catch { /* GitHub reads remain available. */ }
+  try {
+    const response = await fetch('./initial.json', { credentials: 'omit', cache: 'no-store' });
+    if (response.ok) { const initial = await response.json(); if (!state.locked && !state.exiting && generation === state.authGeneration) state.initial = initial; }
+  } catch { /* GitHub reads remain available. */ }
 }
 function run(operation) { Promise.resolve().then(operation).catch((error) => showNotice(errorMessage(error), true)); }
 
@@ -385,9 +377,6 @@ function bindEvents() {
   $('new-post').addEventListener('click', () => run(() => loadRecord(newPost())));
   $('edit-about').addEventListener('click', () => run(() => loadSpecial('about')));
   $('edit-settings').addEventListener('click', () => run(() => loadSpecial('settings')));
-  $('connect-button').addEventListener('click', () => { $('connection-dialog').showModal(); if (!state.client) $('github-token').focus(); });
-  $('author-login-button').addEventListener('click', () => { $('connection-dialog').showModal(); $('github-token').focus(); });
-  $('connect-form').addEventListener('submit', (event) => { event.preventDefault(); const token = $('github-token').value.trim(); if (token) run(() => connect(token)); });
   $('disconnect-button').addEventListener('click', () => run(disconnect));
   $('refresh-posts').addEventListener('click', () => run(() => loadRemote({ notify: true })));
   $('refresh-drafts').addEventListener('click', () => run(refreshDrafts));
@@ -410,7 +399,9 @@ function bindEvents() {
   $('import-file').addEventListener('change', () => run(async () => { try { await importMarkdown($('import-file').files[0]); } finally { $('import-file').value = ''; } }));
   $('insert-image').addEventListener('click', () => $('image-file').click());
   $('image-file').addEventListener('change', () => run(async () => { try { for (const file of $('image-file').files) await addImage(file); } finally { $('image-file').value = ''; } }));
-  window.addEventListener('beforeunload', (event) => { if (state.unpersisted || state.busy) { event.preventDefault(); event.returnValue = ''; } });
+  window.addEventListener('beforeunload', (event) => { if (!state.exiting && (state.unpersisted || state.busy)) { event.preventDefault(); event.returnValue = ''; } });
+  window.addEventListener('pagehide', () => { state.exiting = true; state.client?.clear(); state.client = null; lockWorkspace(); });
+  window.addEventListener('pageshow', (event) => { if (event.persisted) window.location.reload(); });
   document.addEventListener('visibilitychange', () => { if (!state.locked && document.visibilityState === 'hidden' && state.unpersisted) saveCurrent({ quiet: true }).catch(() => {}); });
   document.addEventListener('keydown', (event) => { if (!state.locked && (event.ctrlKey || event.metaKey) && event.key === 's') { event.preventDefault(); run(saveCurrent); } });
 }
@@ -418,14 +409,28 @@ function bindEvents() {
 function createEditor() {
   // Never send editor analytics. The entire editor and sanitizer are bundled locally.
   editor = new Editor({ el: $('editor'), height: '560px', minHeight: '420px', initialEditType: 'wysiwyg', previewStyle: 'tab', language: 'zh-CN', placeholder: '写下你的第一句话……', usageStatistics: false, autofocus: false, linkAttributes: { target: '_blank', rel: 'noopener noreferrer' }, customHTMLSanitizer: sanitize, toolbarItems: [['heading', 'bold', 'italic', 'strike'], ['hr', 'quote'], ['ul', 'ol', 'task'], ['table', 'image', 'link'], ['code', 'codeblock']], hooks: { addImageBlobHook: (blob, callback) => { addImage(blob, callback); return false; } }, events: { change: () => {
-    if (state.suppress || !state.current || state.current.kind === 'settings') return;
+    if (state.suppress || state.locked || state.exiting || !state.current || state.current.kind === 'settings') return;
     const value = editor.getMarkdown();
     if (value === state.editorShadow) return;
     state.editorShadow = value; state.current.body = canonicalBody(value, state.current.images); updateCount(); changed();
   } } });
 }
 async function init() {
-  $('token-link').href = TOKEN_URL; bindEvents();
-  const token = readSession(); if (token) await connect(token, { restore: true });
+  bindEvents();
+  if (!readSession()) { window.location.replace(authorPath()); return; }
+  const generation = ++state.authGeneration;
+  const isCurrent = () => generation === state.authGeneration && !state.exiting;
+  let auth;
+  try { auth = await restoreAuthor({ isCurrent }); }
+  catch (error) {
+    if (!isCurrent()) return;
+    clearSession(); window.location.replace(authorPath(error?.status === 0 || !error?.status ? 'verification-unavailable' : 'session-expired')); return;
+  }
+  if (!isCurrent()) { auth?.client.clear(); return; }
+  if (!auth) { window.location.replace(authorPath()); return; }
+  state.client = auth.client; state.login = auth.login; $('connection-label').textContent = auth.login + ' · 作者';
+  await unlockWorkspace();
+  if (!isCurrent() || state.locked) return;
+  try { await loadRemote(); } catch (error) { if (isCurrent()) showNotice(errorMessage(error), true); }
 }
-init().catch((error) => { showNotice('写作室启动未完成：' + errorMessage(error), true); saveStatus('启动异常，请刷新', true); });
+init().catch((error) => { if (state.exiting) return; showNotice('写作室启动未完成：' + errorMessage(error), true); saveStatus('启动异常，请刷新', true); });
