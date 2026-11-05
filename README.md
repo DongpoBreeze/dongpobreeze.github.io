@@ -2,7 +2,9 @@
 
 公开博客：[dongpobreeze.github.io](https://dongpobreeze.github.io/)。所有人都能直接阅读首页、文章、归档、主题和关于页，无需登录。
 
-作者验证是独立的页面：[作者入口](https://dongpobreeze.github.io/author/)。也可以从博客页脚点击 **作者入口**。验证通过后会进入 [写作室](https://dongpobreeze.github.io/admin/)，可视化写作和管理博客。
+写作室使用独立地址：[dongpobreeze.github.io/admin/](https://dongpobreeze.github.io/admin/)。请自行保存此地址，所有公开阅读页面都不显示创作或作者验证入口。
+
+首次访问写作室会前往独立的 [作者验证页](https://dongpobreeze.github.io/author/)，验证通过后即可可视化写作和管理博客。
 
 ## 在可视化编辑器里管理博客
 
