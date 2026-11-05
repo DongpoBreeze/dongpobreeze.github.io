@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: blob: data:; connect-src 'self' https://api.github.com; font-src 'self' data:; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>写作室 · 博客管理</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./editor.css">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./editor.js"></script>
+</head>
+<body>
+  <a class="skip" href="#author-login-button">跳到作者验证</a>
+  <header class="topbar">
+    <div class="identity"><a href="/" class="back-link">← 返回博客</a><span class="divider"></span><strong>写作室<span class="brand-dot">.</span></strong><span class="local-note">从一点想法开始</span></div>
+    <button id="connect-button" class="connection"><span class="connection-dot"></span><span id="connection-label">作者验证</span></button>
+  </header>
+  <main id="author-gate" class="author-gate">
+    <section class="gate-copy"><span class="eyebrow">一个安静的写作空间</span><h1>你的文字，<br>从这里出发<span>.</span></h1><p>写文章、整理想法，打理属于自己的博客。<br>请先验证作者身份，进入个人写作室。</p><button id="author-login-button" class="primary">验证 GitHub 作者身份 <span>→</span></button><p id="gate-status" class="gate-status" role="status">仅对作者 DongpoBreeze 开放</p><a href="/" class="gate-back">← 回博客读文章</a></section>
+    <aside class="gate-paper" aria-label="作者验证说明"><span class="gate-paper-label">AUTHOR’S DESK</span><div class="gate-lines"><span></span><span></span><span></span></div><h2>留给自己的<br>一方书桌。</h2><div class="gate-rule"></div><p><strong>01</strong><span>用专用 GitHub 令牌验证作者身份</span></p><p><strong>02</strong><span>正文与图片草稿保存在本机浏览器</span></p><p><strong>03</strong><span>发布时再次校验仓库写入权限</span></p><small>无需另外注册，令牌仅在当前会话保存。</small></aside>
+  </main>
+  <div class="workspace" id="workspace-shell" hidden inert>
+    <aside class="sidebar" aria-label="文章与站点管理">
+      <button id="new-post" class="primary new-post">＋ 写一篇新文章</button>
+      <nav class="site-nav" aria-label="站点设置"><button id="edit-about">关于我 <span>↗</span></button><button id="edit-settings">站点资料 <span>↗</span></button></nav>
+      <details open class="library"><summary>我的内容</summary>
+        <div class="list-heading"><h2>本机草稿 <span id="draft-count">0</span></h2><button id="refresh-drafts" class="small-button" title="刷新本机草稿">刷新</button></div>
+        <p class="small muted">仅保存在此设备的此浏览器，含待发布图片。</p>
+        <ul id="draft-list" class="document-list"><li class="empty">还没有本机草稿</li></ul>
+        <div class="list-heading remote-heading"><h2>仓库文章 <span id="post-count">—</span></h2><button id="refresh-posts" class="small-button">刷新</button></div>
+        <p id="remote-note" class="small muted">连接 GitHub 后管理已发布和已撤下文章。</p>
+        <input id="post-filter" class="filter" type="search" placeholder="搜索文章标题" aria-label="搜索仓库文章" hidden>
+        <ul id="post-list" class="document-list"></ul>
+      </details>
+      <p class="sidebar-foot">文章和图片只在点击发布后<br>提交到你的 GitHub 仓库。</p>
+    </aside>
+    <main class="main" id="main">
+      <div class="document-bar"><div><span class="eyebrow" id="document-kind">新的文章</span><span id="save-status" class="save-status" role="status">准备就绪</span></div><div class="document-actions"><button id="preview-button">预览</button><button id="save-button">保存草稿</button><button id="publish-button" class="primary">发布文章</button></div></div>
+      <div id="notice" class="notice" role="status" hidden></div>
+      <section id="editing-view" class="editing-view">
+        <div class="writing-column">
+          <label class="sr-only" for="document-title">文章标题</label><input id="document-title" class="document-title" placeholder="给这篇文章起个名字" autocomplete="off" maxlength="500">
+          <p class="writing-hint" id="writing-hint">在这里写下正文。选中文字即可排版，也可以拖入或粘贴图片。</p>
+          <div class="editor-tools"><div class="mode-label"><span class="mode-dot"></span>可视化编辑 · 所见即所得</div><button id="source-button" class="small-button">完整 Markdown 原文</button></div>
+          <div id="editor"></div>
+          <div id="source-panel" hidden><label for="source-text" class="source-label">完整原文（包含 YAML 资料区）</label><textarea id="source-text" spellcheck="false" aria-describedby="source-help"></textarea><p id="source-help" class="small muted">修改后点击“应用原文”。未知 YAML 字段会保留；已有文章的地址不能在这里更改。</p><button id="apply-source" class="primary">应用原文</button><button id="cancel-source">取消原文修改</button></div>
+          <div class="bottom-tools"><span id="word-count" class="small muted">0 字</span><div><input id="import-file" type="file" accept=".md,.markdown,text/markdown,text/plain" hidden><button id="import-button" class="small-button">导入 Markdown</button><button id="export-button" class="small-button">导出 Markdown</button></div></div>
+        </div>
+        <aside class="metadata" id="metadata" aria-label="文章资料">
+          <h2>文章资料</h2>
+          <label for="post-date">发布日期</label><input id="post-date" type="date" required>
+          <label for="post-tags">主题标签</label><input id="post-tags" placeholder="学习, 生活" maxlength="500"><p class="field-help">用逗号分隔，可填写多个主题。</p>
+          <label for="post-description">文章摘要</label><textarea id="post-description" rows="5" maxlength="2000" placeholder="用一两句话介绍这篇文章……"></textarea>
+          <label for="post-slug">文章地址</label><input id="post-slug" placeholder="如 my-first-post" maxlength="200"><p id="slug-help" class="field-help">第一次发布后固定，避免旧链接失效。新文章留空时自动生成。</p>
+          <div class="image-note"><strong>插入图片</strong><p>工具栏图片按钮、粘贴或拖入均可。支持 PNG / JPEG / WebP / GIF / AVIF，每张最多 10 MB；发布前只存本机。</p><button id="insert-image" class="small-button">选择本机图片</button><input id="image-file" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/avif" multiple hidden></div>
+          <div id="remote-actions" class="remote-actions" hidden><a id="view-post" target="_blank" rel="noopener noreferrer">查看公开页面 ↗</a><button id="withdraw-button">撤下文章</button><button id="delete-remote" class="danger-text">删除仓库文章</button></div>
+          <p class="field-help">本机草稿不会自动同步到其他设备。清理浏览器数据会删除草稿，请及时导出备份。</p>
+        </aside>
+      </section>
+      <section id="settings-view" class="settings-view" hidden><span class="eyebrow">你的个人空间</span><h1>站点资料</h1><p class="muted">这些文字会出现在博客页头、首页和搜索结果中。</p><div class="settings-fields"><label for="site-name">站点名称</label><input id="site-name" maxlength="300"><label for="site-author">作者名字</label><input id="site-author" maxlength="300"><label for="site-tagline">首页短句</label><input id="site-tagline" maxlength="1000"><label for="site-description">站点介绍</label><textarea id="site-description" rows="5" maxlength="2000"></textarea></div><p class="small muted">发布后由 GitHub Pages 自动部署生效。</p></section>
+      <noscript>写作室需要浏览器启用 JavaScript。</noscript>
+    </main>
+  </div>
+  <dialog id="connection-dialog" class="connect-dialog"><div class="dialog-heading"><div><span class="eyebrow">首次验证，一次设置</span><h2>验证 GitHub 作者身份</h2></div><button data-close="connection-dialog" class="close-button" aria-label="关闭连接窗口">×</button></div><p class="muted">仅允许 <strong>DongpoBreeze</strong> 账户进入写作室。GitHub 验证通过后，才能编辑草稿、站点资料和发布文章。</p><ol class="steps"><li><strong>创建专用令牌</strong><p>登录 <b>DongpoBreeze</b> 账户，打开 <a id="token-link" target="_blank" rel="noopener noreferrer">GitHub fine-grained 令牌页面 ↗</a>。Resource owner 选择 <b>DongpoBreeze</b>。</p></li><li><strong>只授权这个博客仓库</strong><p>Repository access 选 <b>Only select repositories</b>，手动只选 <b>dongpobreeze.github.io</b>（链接不能自动选仓库）。Permissions → Repository permissions → <b>Contents: Read and write</b>。无需其他权限。</p></li><li><strong>生成后粘贴到这里</strong><p>到页面底部点击 Generate token，复制生成的令牌。令牌只发送到 api.github.com。</p></li></ol><form id="connect-form"><label for="github-token">GitHub 令牌</label><input id="github-token" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…" required><p class="small muted">仅在当前浏览器会话保存，关闭浏览器会话后需重新验证。不会写入草稿、仓库或导出文件。请勿在共用设备上保持连接。</p><p id="connection-error" class="error-text" role="alert" hidden></p><div class="dialog-buttons"><button id="disconnect-button" type="button" class="danger-text" hidden>断开并清除令牌</button><button type="button" data-close="connection-dialog">取消</button><button id="confirm-connect" type="submit" class="primary">验证并进入</button></div></form></dialog>
+  <dialog id="preview-dialog" class="preview-dialog"><div class="dialog-heading"><div><span class="eyebrow">本机预览 · 尚未发布</span><h2 id="preview-title"></h2></div><button data-close="preview-dialog" class="close-button" aria-label="关闭预览">×</button></div><p id="preview-meta" class="small muted"></p><div id="preview-content" class="preview-content"></div></dialog>
+  <dialog id="confirm-dialog" class="confirm-dialog"><h2 id="confirm-title"></h2><p id="confirm-message"></p><div class="dialog-buttons"><button id="confirm-cancel">取消</button><button id="confirm-action" class="primary">继续</button></div></dialog>
+</body>
+</html>

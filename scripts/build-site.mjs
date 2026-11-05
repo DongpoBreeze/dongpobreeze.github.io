@@ -4,6 +4,7 @@ import { basename, dirname, extname, isAbsolute, join, relative, resolve, sep } 
 import { fileURLToPath } from "node:url";
 import MarkdownIt from "markdown-it";
 import { parse as parseYaml } from "yaml";
+import { buildAdmin } from "./build-admin.mjs";
 
 const projectDirectory = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const defaultBaseUrl = "https://dongpobreeze.github.io";
@@ -46,7 +47,7 @@ async function listMarkdown(directory) {
 }
 
 function splitFrontMatter(source, label, required = true) {
-  const normalized = source.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+  const normalized = source.replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n").replace(/^(?:[ \t]*\n)+(?=---\n)/, "");
   if (!normalized.startsWith("---\n")) {
     if (required) throw new Error(label + " must start with YAML front matter.");
     return { data: {}, content: normalized };
@@ -162,7 +163,7 @@ function makeFeed(site) {
 export async function buildSite({ rootDir = projectDirectory, outputDir = join(rootDir, "dist") } = {}) {
   rootDir = resolve(rootDir);
   outputDir = resolve(outputDir);
-  if (inside(outputDir, rootDir) || ["content", "assets", "scripts", ".git", ".github", "node_modules"].some((name) => inside(join(rootDir, name), outputDir) || inside(outputDir, join(rootDir, name)))) {
+  if (inside(outputDir, rootDir) || ["content", "assets", "admin", "scripts", ".git", ".github", "node_modules"].some((name) => inside(join(rootDir, name), outputDir) || inside(outputDir, join(rootDir, name)))) {
     throw new Error("Refusing to replace a source directory with generated output.");
   }
   const config = readConfig(await readFile(join(rootDir, "blog.config.json"), "utf8"));
@@ -223,8 +224,12 @@ export async function buildSite({ rootDir = projectDirectory, outputDir = join(r
   await writeFile(join(outputDir, "blog.js"), "window.BLOG=JSON.parse(" + JSON.stringify(dataJson).replace(/</g, "\\u003c") + ");\n", "utf8");
   await writeFile(join(outputDir, "feed.xml"), makeFeed(site), "utf8");
   await writeFile(join(outputDir, "sitemap.xml"), ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">', ...pages.map((page) => "  <url><loc>" + escapeXml(site.baseUrl + page.path) + "</loc></url>"), "</urlset>", ""].join("\n"), "utf8");
-  await writeFile(join(outputDir, "robots.txt"), "User-agent: *\nAllow: /\nSitemap: " + site.baseUrl + "/sitemap.xml\n", "utf8");
+  await writeFile(join(outputDir, "robots.txt"), "User-agent: *\nAllow: /\nDisallow: /admin/\nSitemap: " + site.baseUrl + "/sitemap.xml\n", "utf8");
   await writeFile(join(outputDir, ".nojekyll"), "", "utf8");
+  let hasAdmin = false;
+  try { hasAdmin = (await stat(join(rootDir, "admin", "index.html"))).isFile(); }
+  catch (error) { if (error.code !== "ENOENT") throw error; }
+  if (hasAdmin) await buildAdmin({ rootDir, outputDir });
   return site;
 }
 

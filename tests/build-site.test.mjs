@@ -145,6 +145,16 @@ test("drafts are skipped before incomplete metadata can enter any public artifac
   assert.equal(await exists(join(rootDir, "dist", "posts", "unfinished")), false);
 });
 
+test("blank lines before YAML copied from the web editor do not block publishing", async (t) => {
+  const rootDir = await fixture(t);
+  await writeFile(join(rootDir, "content", "posts", "embedding学习.md"), "\uFEFF\r\n \t\r\n---\r\ntitle: 我的第一篇文章\r\ndate: 2026-11-03\r\n---\r\n\r\n## embedding的理解\r\n\r\n保留正文。\r\n");
+  const site = await buildSite({ rootDir });
+  assert.equal(site.posts.length, 1);
+  assert.equal(site.posts[0].slug, "embedding学习");
+  assert.match(site.posts[0].html, /<h2>embedding的理解<\/h2>/);
+  assert.match(site.posts[0].html, /保留正文。/);
+});
+
 test("real calendar dates and strict YYYY-MM-DD are required", async (t) => {
   for (const date of ["2026-02-30", "2025-02-29", "2026-13-01", "2026-00-10", "2026-01-00", "0000-01-01", "2026-11-03T08:00:00Z", 20261103]) {
     await t.test(String(date), async (t) => {
@@ -197,7 +207,7 @@ test("default about, generated slugs, optional assets and explicit alternate out
 test("configuration and destructive output paths are validated", async (t) => {
   const rootDir = await fixture(t, { about: "../outside.md" });
   await assert.rejects(buildSite({ rootDir }), /about path must be a Markdown file inside/);
-  for (const outputDir of [rootDir, join(rootDir, "content"), join(rootDir, "content", "posts"), join(rootDir, "assets")]) {
+  for (const outputDir of [rootDir, join(rootDir, "content"), join(rootDir, "content", "posts"), join(rootDir, "assets"), join(rootDir, "admin")]) {
     await assert.rejects(buildSite({ rootDir, outputDir }), /Refusing to replace a source directory/);
   }
   await writeFile(join(rootDir, "blog.config.json"), JSON.stringify({ ...defaultConfig, baseUrl: "javascript:alert(1)" }));

@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { test } from 'node:test';
+import { buildAdmin } from '../scripts/build-admin.mjs';
+
+test('admin production build bundles editor, Chinese locale and sanitizer locally with noindex and restrictive script policy', async (t) => {
+  const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+  const outputDir = await mkdtemp(join(tmpdir(), 'blog-admin-build-')); t.after(() => rm(outputDir, { recursive: true, force: true }));
+  await buildAdmin({ rootDir, outputDir });
+  const html = await readFile(join(outputDir, 'admin/index.html'), 'utf8');
+  const script = await readFile(join(outputDir, 'admin/editor.js'), 'utf8');
+  const initial = JSON.parse(await readFile(join(outputDir, 'admin/initial.json'), 'utf8'));
+  assert.match(html, /noindex, nofollow, noarchive/);
+  assert.match(html, /script-src 'self';/);
+  assert.doesNotMatch(html, /unsafe-eval|<script[^>]*src="https?:/);
+  assert.match(html, /connect-src 'self' https:\/\/api\.github\.com;/);
+  assert.ok((await stat(join(outputDir, 'admin/editor.css'))).size > 10000);
+  assert.ok(script.includes('所见即所得'), 'Chinese locale is bundled');
+  assert.ok(script.includes('noopener noreferrer'), 'external links have safe attributes');
+  assert.equal(typeof JSON.parse(initial.config).name, 'string');
+  assert.match(initial.configSha, /^[a-f0-9]{40}$/);
+  assert.equal(initial.token, undefined);
+  assert.equal(initial.posts, undefined);
+  assert.match(html, /id="workspace-shell" hidden inert/);
+  assert.match(html, /id="author-gate"/);
+  assert.match(html, /id="author-login-button"/);
+});

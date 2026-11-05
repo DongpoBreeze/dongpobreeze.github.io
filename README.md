@@ -1,8 +1,32 @@
 # 个人博客
 
-你可以直接用 GitHub 网页写文章。Markdown 是纯文本格式，写作不需要安装博客软件；提交文章后，GitHub Actions 会自动构建并发布。
+博客地址：[dongpobreeze.github.io](https://dongpobreeze.github.io/)。点击网站右上角 **写文章**，或直接打开 [作者入口](https://dongpobreeze.github.io/admin/)。通过作者验证后，就能可视化写作和管理博客。
 
-## 最简单的写作方法
+## 在可视化编辑器里管理博客
+
+- **写文章**：输入标题，在正文里直接排版；工具栏可添加标题、加粗、列表、引用、代码、表格和图片。
+- **保存草稿**：草稿先存到当前浏览器，写作时自动保存。保存草稿不会更新网站；浏览器数据被清除后草稿也会丢失，重要内容请导出备份。
+- **发布文章**：连接 GitHub 后点击发布；文章和配图写入仓库，GitHub Pages 随后自动更新。提交完成和网站部署完成是两个步骤，可通过编辑器里的发布记录链接检查。
+- **修改或撤下文章**：从文章列表打开文章继续编辑，或确认撤下。撤下后，历史版本仍保留在 Git 历史中。
+- **修改个人资料**：在博客设置里修改博客名称、首页介绍和作者，在“关于我”里编辑个人介绍。
+
+编辑器可在电脑和手机浏览器使用。草稿保留在写作的这台设备；已经发布的文章保存在 GitHub，可换设备继续编辑。
+
+编辑区、草稿列表和站点设置只在作者验证通过后显示。当前仅允许 `DongpoBreeze` 账号进入；GitHub 仍会对每次发布检查仓库写入权限。普通访客可阅读博客。
+
+## 首次连接 GitHub
+
+GitHub Pages 提供静态托管，发布时需要你授权编辑器写入博客仓库。编辑器的“连接 GitHub”提供设置指引：
+
+1. 登录 `DongpoBreeze`，按页面链接创建 **fine-grained personal access token**。
+2. 在 **Only select repositories** 中只选择 `dongpobreeze.github.io`，权限使用 **Contents → Read and write**。
+3. 把生成的令牌粘贴到作者验证框，点击验证。令牌不要写进文章或发送给他人；只会发往 GitHub API，不会提交到博客仓库。
+
+验证后即可直接在可视化页面发布，无需手动编辑仓库文件。令牌仅在当前浏览器会话保存，断开后需要重新验证；令牌过期或撤销后，重新创建即可。网站读者不需要登录。
+
+## 直接编辑 Markdown（可选）
+
+文章仍以 Markdown 保存在 GitHub。如果你想使用原有方式：
 
 1. 打开文章目录：[content/posts](https://github.com/DongpoBreeze/dongpobreeze.github.io/tree/main/content/posts)。
 2. 点击 **Add file → Create new file**。
@@ -70,4 +94,4 @@ npm run build
 python -m http.server 4173 --directory dist
 ```
 
-然后打开 `http://localhost:4173/`。部署工作流只发布 `dist/` 里的网页、文章、配图、RSS 和站点地图，不包含本说明、模板或写作脚本。
+然后打开 `http://localhost:4173/`。部署工作流只发布 `dist/` 里的博客、作者入口、配图、RSS 和站点地图，不包含本说明、模板或构建脚本。
